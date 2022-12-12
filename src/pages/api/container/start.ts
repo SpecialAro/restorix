@@ -7,6 +7,23 @@ type Data = {
   message: string;
 };
 
+// fix from: https://github.com/apocas/dockerode/issues/703
+function dockerPull({ imageName }: { imageName: string }) {
+  return new Promise((resolve, reject): any =>
+    docker.pull(imageName, (err: any, stream: any) => {
+      // https://github.com/apocas/dockerode/issues/357
+      docker.modem.followProgress(stream, onFinished);
+      function onFinished(err: any, output: any) {
+        if (!err) {
+          resolve(true);
+          return;
+        }
+        reject(err);
+      }
+    }),
+  );
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>,
@@ -16,12 +33,12 @@ export default async function handler(
   const volumesToMount = req.body.volumesToMount;
   const crontabEnv = req.body.crontabEnv;
   const imageName = 'specialaro/restorix-core:latest';
-  await docker.pull(imageName);
 
   const bindVolumes = [
     '/var/run/docker.sock:/var/run/docker.sock',
     `${fullPathBackup}:/backup`,
   ];
+
   volumesToMount.map((element: string) => {
     bindVolumes.push(`${element}:/tobackup/${element}`);
   });
@@ -46,9 +63,13 @@ export default async function handler(
     await container.remove();
   }
 
-  docker
+  console.log('Pulling images... ⏳');
+  await dockerPull({ imageName });
+  console.log(`└─ Done`);
+
+  await docker
     .createContainer({
-      Image: imageName.split(':')[0],
+      Image: imageName,
       name: 'restorix-core',
       Env: [`MODE_ENV=${modeEnv}`, `CRONTAB_ENV=${crontabEnv}`],
       HostConfig: {
