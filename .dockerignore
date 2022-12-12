@@ -1,0 +1,14 @@
+node_modules
+.next
+.github
+.husky
+database
+.pnpm-store
+
+.env.*
+.gitlab-ci.yml
+docker-compose*.yml
+Dockerfile*
+README.md
+public/uploads/**/*
+public/uploads
