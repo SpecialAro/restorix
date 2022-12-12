@@ -5,7 +5,8 @@ const docker = new Docker();
 
 type Data = {
   message?: string;
-  volumes?: any;
+  container?: any;
+  status?: string;
 };
 
 export default async function handler(
@@ -13,8 +14,17 @@ export default async function handler(
   res: NextApiResponse<Data>,
 ) {
   if (req.method === 'GET') {
-    const { Volumes } = await docker.listVolumes();
-    res.status(200).json({ volumes: Volumes });
+    try {
+      const container = docker.getContainer('restorix-core');
+      const { State } = await container.inspect();
+      res.status(200).json({ status: State.Status });
+    } catch (e: any) {
+      if (e.statusCode === 404) {
+        res.status(200).json({ message: e.reason, status: 'inexistent' });
+        return;
+      }
+      res.status(400).json({ message: e.json.message });
+    }
   } else {
     res
       .status(400)

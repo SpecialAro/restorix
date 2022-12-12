@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  app:
+    image: specialaro/restorix-ui:latest # Official image in: bestporto/bestporto-pa:latest
+    container_name: restorix-ui
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import type { NextApiRequest, NextApiResponse } from "next";
-import Docker from "dockerode";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import Docker from 'dockerode';
 const docker = new Docker();
 
 type Data = {
@@ -9,38 +9,37 @@ type Data = {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse<Data>,
 ) {
   const fullPathBackup = req.body.backupPath;
   const modeEnv = req.body.modeEnv;
   const volumesToMount = req.body.volumesToMount;
-  const imageName = "specialaro/restorix:latest";
+  const crontabEnv = req.body.crontabEnv;
+  const imageName = 'specialaro/restorix:latest';
   await docker.pull(imageName);
 
   const bindVolumes = [
-    "/var/run/docker.sock:/var/run/docker.sock",
+    '/var/run/docker.sock:/var/run/docker.sock',
     `${fullPathBackup}:/backup`,
   ];
   volumesToMount.map((element: string) => {
     bindVolumes.push(`${element}:/tobackup/${element}`);
   });
 
-  console.log(bindVolumes);
-
   var auxContainer: Docker.Container;
   // Check if container is running
 
   const containerList = await docker.listContainers({
     all: true,
-    filters: { name: ["restorix"] },
+    filters: { name: ['restorix-core'] },
   });
 
   if (containerList.length !== 0) {
     const containerStatus = containerList[0].State;
-    if (containerStatus !== "exited") {
+    if (containerStatus !== 'exited') {
       res
         .status(200)
-        .json({ message: "Restorix is still running in the background." });
+        .json({ message: 'Restorix is still running in the background.' });
       return;
     }
     const container = docker.getContainer(containerList[0].Id);
@@ -49,11 +48,12 @@ export default async function handler(
 
   docker
     .createContainer({
-      Image: imageName.split(":")[0],
-      name: "restorix",
-      Env: [`MODE_ENV=${modeEnv}`],
+      Image: imageName.split(':')[0],
+      name: 'restorix-core',
+      Env: [`MODE_ENV=${modeEnv}`, `CRONTAB_ENV=${crontabEnv}`],
       HostConfig: {
         Binds: bindVolumes,
+        AutoRemove: true,
       },
     })
     .then(function (container) {
@@ -61,5 +61,5 @@ export default async function handler(
       return auxContainer.start();
     });
 
-  res.status(200).json({ message: "Restorix Started" });
+  res.status(200).json({ message: 'Restorix Started' });
 }

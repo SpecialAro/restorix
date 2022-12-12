@@ -3,13 +3,17 @@
   "version": "0.0.1-alpha.1",
   "private": true,
   "engines": {
+    "node": "19.2.0",
     "pnpm": "7.17.1"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "docker:start": "pnpm install --frozen-lockfile && pnpm run start",
+    "lint": "next lint",
+    "ts-lint": "tsc --noEmit --incremental --watch",
+    "ts-lint-commit-hook": "tsc --noEmit --incremental"
   },
   "dependencies": {
     "@types/node": "18.11.13",
@@ -19,7 +23,11 @@
     "dockerode": "^3.3.4",
     "eslint": "8.29.0",
     "eslint-config-next": "13.0.6",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-unused-imports": "^2.0.0",
     "next": "13.0.6",
+    "prettier": "^2.8.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "typescript": "4.9.4"

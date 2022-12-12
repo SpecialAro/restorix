@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
-import styles from "../styles/Home.module.css";
+import { useEffect, useState } from 'react';
+import styles from '../styles/Home.module.css';
 
-const API_URL = "http://localhost:3000/api";
+const API_URL = 'http://localhost:3000/api';
 
 async function fetchApi(event: any) {
   event.preventDefault();
   const backupPath = event.target.backup_path.value;
   const modeEnv = event.target.mode_env.value;
+  const crontabEnv = event.target.crontab_env.value;
   var selectedVolumes = [];
-  if (modeEnv === "backup") {
+  if (modeEnv === 'backup') {
     const arraySelectedVolumes = Array.from(event.target.selected_volumes);
 
     const newArray = arraySelectedVolumes.map((selectedVolumes: any) => {
@@ -24,56 +25,89 @@ async function fetchApi(event: any) {
   }
 
   fetch(`${API_URL}/container/start`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       backupPath: backupPath,
       modeEnv: modeEnv,
       volumesToMount: selectedVolumes,
+      crontabEnv: crontabEnv,
     }),
-  }).then(async (resp) => console.log(await resp.json()));
+  }).then(async resp => console.log(await resp.json()));
+}
+
+function stopContainer() {
+  fetch(`${API_URL}/container/stop`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  }).then(async resp => console.log(await resp.json()));
 }
 
 export default function Home() {
   const [volumeList, setVolumeList] = useState([]);
+  const [containerStatus, setContainerStatus] = useState<string | undefined>(
+    undefined,
+  );
   useEffect(() => {
     function getVolumes() {
       fetch(`${API_URL}/docker/volumes`, {
-        method: "GET",
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       })
-        .then(async (resp) => {
+        .then(async resp => {
           return await resp.json();
         })
-        .then((data) => {
+        .then(data => {
           setVolumeList(data.volumes);
         });
     }
     getVolumes();
   }, []);
+
+  useEffect(() => {
+    function getVolumes() {
+      fetch(`${API_URL}/container/status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then(async resp => {
+          return await resp.json();
+        })
+        .then(data => {
+          setContainerStatus(data!.status);
+        });
+    }
+
+    getVolumes();
+    const interval = setInterval(() => getVolumes(), 5000);
+
+    return () => clearInterval(interval);
+  });
+
   return (
     <div className={styles.container}>
       <form onSubmit={fetchApi}>
-        <input type="text" id="backup_path" name="backup_path" required />
         <label>
-          <input
-            type="radio"
-            id="backup"
-            name="mode_env"
-            value="backup"
-            checked
-          />
-          Backup
+          Backup location (absolute path)
+          <br />
+          <input type="text" id="backup_path" name="backup_path" required />
         </label>
+        <br />
+        <br />
         <label>
-          <input type="radio" id="restore" name="mode_env" value="restore" />
-          Restore
+          Crontab
+          <br />
+          <input type="text" id="crontab_env" name="crontab_env" />
         </label>
-        <button type="submit">START RESTORIX</button>
+        <br />
         <br />
         {volumeList.map((volume: any) => {
           return (
@@ -90,7 +124,52 @@ export default function Home() {
             </div>
           );
         })}
+        <br />
+        <br />
+        <label>
+          <input
+            type="radio"
+            id="backup"
+            name="mode_env"
+            value="backup"
+            checked
+          />
+          Backup
+        </label>
+        <br />
+        <label>
+          <input type="radio" id="restore" name="mode_env" value="restore" />
+          Restore
+        </label>
+        <br />
+        <br />
+        <button type="submit">START RESTORIX</button>
       </form>
+      <br />
+      {containerStatus === 'running' && (
+        <button
+          onClick={() => {
+            stopContainer();
+          }}
+        >
+          STOP RESTORIX
+        </button>
+      )}
+      <br />
+      <br />
+      Service Status:{' '}
+      <span
+        style={{
+          color:
+            containerStatus === 'running'
+              ? 'green'
+              : containerStatus === 'inexistent'
+              ? 'red'
+              : 'black',
+        }}
+      >
+        {containerStatus}
+      </span>
     </div>
   );
 }

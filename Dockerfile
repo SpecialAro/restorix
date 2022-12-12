@@ -1,12 +1,10 @@
-#!/bin/bash
-
 # Install dependencies only when needed
 FROM node:19-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm@$(node --eval="process.stdout.write(require('./package.json').engines.pnpm)") --frozen-lockfile
-RUN pnpm install
+RUN npm install -g pnpm@$(node --eval="process.stdout.write(require('./package.json').engines.pnpm)")
+RUN pnpm install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM node:19-alpine AS builder
@@ -33,10 +31,9 @@ COPY --from=builder /app/.next ./.next
 # COPY --from=builder /app/prisma ./prisma
 
 RUN npm install -g pnpm@$(node --eval="process.stdout.write(require('./package.json').engines.pnpm)")
-RUN pnpm install
 
 EXPOSE 3000
 
 ENV PORT 3000
 
-CMD ["pnpm", "start"]
+CMD ["pnpm", "docker:start"]
