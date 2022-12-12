@@ -15,7 +15,7 @@ export default async function handler(
   const modeEnv = req.body.modeEnv;
   const volumesToMount = req.body.volumesToMount;
   const crontabEnv = req.body.crontabEnv;
-  const imageName = 'specialaro/restorix:latest';
+  const imageName = 'specialaro/restorix-core:latest';
   await docker.pull(imageName);
 
   const bindVolumes = [

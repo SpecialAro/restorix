@@ -2,8 +2,8 @@ version: "3"
 
 services:
   app:
-    image: specialaro/restorix-ui:latest # Official image in: bestporto/bestporto-pa:latest
-    container_name: restorix-ui
+    image: specialaro/restorix:latest # Official image in: bestporto/bestporto-pa:latest
+    container_name: restorix
     restart: always
     ports:
       - "3000:3000"
