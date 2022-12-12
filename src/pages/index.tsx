@@ -2,41 +2,6 @@ import { useEffect, useState } from 'react';
 import { API_BASEURL } from '../config';
 import styles from '../styles/Home.module.css';
 
-async function fetchApi(event: any) {
-  event.preventDefault();
-  const backupPath = event.target.backup_path.value;
-  const modeEnv = event.target.mode_env.value;
-  const crontabEnv = event.target.crontab_env.value;
-  var selectedVolumes = [];
-  if (modeEnv === 'backup') {
-    const arraySelectedVolumes = Array.from(event.target.selected_volumes);
-
-    const newArray = arraySelectedVolumes.map((selectedVolumes: any) => {
-      if (selectedVolumes.checked !== false) {
-        return selectedVolumes.defaultValue;
-      }
-    });
-    selectedVolumes = newArray.filter((element: string | undefined) => {
-      return element !== undefined;
-    });
-
-    if (selectedVolumes.length === 0) return;
-  }
-
-  fetch(`${API_BASEURL}/container/start`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      backupPath: backupPath,
-      modeEnv: modeEnv,
-      volumesToMount: selectedVolumes,
-      crontabEnv: crontabEnv,
-    }),
-  }).then(async resp => console.log(await resp.json()));
-}
-
 function stopContainer() {
   fetch(`${API_BASEURL}/container/stop`, {
     method: 'POST',
@@ -47,10 +12,61 @@ function stopContainer() {
 }
 
 export default function Home() {
+  const [useSSH, setUseSSH] = useState(false);
   const [volumeList, setVolumeList] = useState([]);
   const [containerStatus, setContainerStatus] = useState<string | undefined>(
     undefined,
   );
+
+  async function fetchApi(event: any) {
+    event.preventDefault();
+    const backupPath = event.target.backup_path.value;
+    const modeEnv = event.target.mode_env.value;
+    const crontabEnv = event.target.crontab_env.value;
+
+    const sshHost = useSSH ? event.target.ssh_host.value : undefined;
+    const sshUser = useSSH ? event.target.ssh_username.value : undefined;
+    const sshPassword = useSSH ? event.target.ssh_password.value : undefined;
+
+    var selectedVolumes = [];
+
+    if (modeEnv === 'backup') {
+      const arraySelectedVolumes = Array.from(event.target.selected_volumes);
+
+      const newArray = arraySelectedVolumes.map((selectedVolumes: any) => {
+        if (selectedVolumes.checked !== false) {
+          return selectedVolumes.defaultValue;
+        }
+      });
+      selectedVolumes = newArray.filter((element: string | undefined) => {
+        return element !== undefined;
+      });
+
+      if (selectedVolumes.length === 0) return;
+    }
+
+    const bodyToSend = {
+      backupPath: backupPath,
+      modeEnv: modeEnv,
+      volumesToMount: selectedVolumes,
+      crontabEnv: crontabEnv,
+      sshSettings: {
+        useSSH: useSSH,
+        sshHost: sshHost,
+        sshUser: sshUser,
+        sshPassword: sshPassword,
+      },
+    };
+
+    fetch(`${API_BASEURL}/container/start`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(bodyToSend),
+    }).then(async resp => console.log(await resp.json()));
+  }
+
   useEffect(() => {
     function getVolumes() {
       fetch(`${API_BASEURL}/docker/volumes`, {
@@ -95,7 +111,7 @@ export default function Home() {
     <div className={styles.container}>
       <form onSubmit={fetchApi}>
         <label>
-          Backup location (absolute path)
+          Backup location (absolute path) {useSSH ? '(Using SSH!)' : null}
           <br />
           <input type="text" id="backup_path" name="backup_path" required />
         </label>
@@ -123,6 +139,41 @@ export default function Home() {
             </div>
           );
         })}
+        <br />
+        <label>
+          Use SSH
+          <input
+            type="checkbox"
+            id="use_ssh"
+            name="use_ssh"
+            value="use_ssh"
+            onChange={() => setUseSSH(!useSSH)}
+          />
+        </label>
+
+        {useSSH ? (
+          <>
+            <br />
+            <br />
+            <label>
+              Host
+              <br />
+              <input type="text" id="ssh_host" name="ssh_settings" />
+            </label>
+            <br />
+            <label>
+              Username
+              <br />
+              <input type="text" id="ssh_username" name="ssh_settings" />
+            </label>
+            <br />
+            <label>
+              Password
+              <br />
+              <input type="password" id="ssh_password" name="ssh_settings" />
+            </label>
+          </>
+        ) : null}
         <br />
         <br />
         <label>

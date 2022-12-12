@@ -28,16 +28,26 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>,
 ) {
-  const fullPathBackup = req.body.backupPath;
-  const modeEnv = req.body.modeEnv;
-  const volumesToMount = req.body.volumesToMount;
-  const crontabEnv = req.body.crontabEnv;
+  const { backupPath, modeEnv, volumesToMount, crontabEnv, sshSettings } =
+    req.body;
+
+  const { useSSH, sshHost, sshUser, sshPassword } = sshSettings;
+
   const imageName = 'specialaro/restorix-core:latest';
 
-  const bindVolumes = [
-    '/var/run/docker.sock:/var/run/docker.sock',
-    `${fullPathBackup}:/backup`,
-  ];
+  const envArray = [`MODE_ENV=${modeEnv}`, `CRONTAB_ENV=${crontabEnv}`];
+
+  const bindVolumes = ['/var/run/docker.sock:/var/run/docker.sock'];
+
+  if (useSSH) {
+    envArray.push(`SSH_HOST_ENV=${sshHost}`);
+    envArray.push(`SSH_USERNAME_ENV=${sshUser}`);
+    envArray.push(`SSH_PASSWORD_ENV=${sshPassword}`);
+    envArray.push(`SSH_PATH_ENV=${backupPath}`);
+  } else {
+    console.log(useSSH);
+    bindVolumes.push(`${backupPath}:/backup`);
+  }
 
   volumesToMount.map((element: string) => {
     bindVolumes.push(`${element}:/tobackup/${element}`);
@@ -71,7 +81,7 @@ export default async function handler(
     .createContainer({
       Image: imageName,
       name: 'restorix-core',
-      Env: [`MODE_ENV=${modeEnv}`, `CRONTAB_ENV=${crontabEnv}`],
+      Env: envArray,
       HostConfig: {
         Binds: bindVolumes,
         AutoRemove: true,
