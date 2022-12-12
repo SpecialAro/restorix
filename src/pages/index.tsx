@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
+import { API_BASEURL } from '../config';
 import styles from '../styles/Home.module.css';
-
-const API_URL = 'http://localhost:3000/api';
 
 async function fetchApi(event: any) {
   event.preventDefault();
@@ -24,7 +23,7 @@ async function fetchApi(event: any) {
     if (selectedVolumes.length === 0) return;
   }
 
-  fetch(`${API_URL}/container/start`, {
+  fetch(`${API_BASEURL}/container/start`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -39,7 +38,7 @@ async function fetchApi(event: any) {
 }
 
 function stopContainer() {
-  fetch(`${API_URL}/container/stop`, {
+  fetch(`${API_BASEURL}/container/stop`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -54,7 +53,7 @@ export default function Home() {
   );
   useEffect(() => {
     function getVolumes() {
-      fetch(`${API_URL}/docker/volumes`, {
+      fetch(`${API_BASEURL}/docker/volumes`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +71,7 @@ export default function Home() {
 
   useEffect(() => {
     function getVolumes() {
-      fetch(`${API_URL}/container/status`, {
+      fetch(`${API_BASEURL}/container/status`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

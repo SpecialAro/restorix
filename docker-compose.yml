@@ -5,6 +5,8 @@ services:
     image: specialaro/restorix:latest # Official image in: bestporto/bestporto-pa:latest
     container_name: restorix
     restart: always
+    environment:
+      - SERVER_BASEURL=http://localhost:3000
     ports:
       - "3000:3000"
     volumes:
