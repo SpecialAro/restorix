@@ -21,7 +21,9 @@ export default async function handler(
         res.status(200).json({ status: State.Status });
         return;
       }
+      console.log('Stopping container... ⏳');
       await container.stop();
+      console.log(`└─ Done`);
       res
         .status(200)
         .json({ status: (await container.inspect()).State.Status });

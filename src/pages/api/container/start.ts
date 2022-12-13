@@ -45,7 +45,6 @@ export default async function handler(
     envArray.push(`SSH_PASSWORD_ENV=${sshPassword}`);
     envArray.push(`SSH_PATH_ENV=${backupPath}`);
   } else {
-    console.log(useSSH);
     bindVolumes.push(`${backupPath}:/backup`);
   }
 
@@ -77,6 +76,7 @@ export default async function handler(
   await dockerPull({ imageName });
   console.log(`└─ Done`);
 
+  console.log('Creating container... ⏳');
   await docker
     .createContainer({
       Image: imageName,
@@ -88,9 +88,12 @@ export default async function handler(
       },
     })
     .then(function (container) {
+      console.log(`└─ Done`);
       auxContainer = container;
+      console.log('Starting container... ⏳');
       return auxContainer.start();
     });
+  console.log(`└─ Done`);
 
   res.status(200).json({ message: 'Restorix Started' });
 }

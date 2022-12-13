@@ -1,10 +1,13 @@
 import {
+  Alert,
+  AlertColor,
   Box,
   Button,
   Checkbox,
   FormControlLabel,
   Radio,
   RadioGroup,
+  Snackbar,
   Switch,
   TextField,
   Typography,
@@ -12,22 +15,49 @@ import {
 import { useEffect, useState } from 'react';
 import { API_BASEURL } from '../config';
 
-function stopContainer() {
-  fetch(`${API_BASEURL}/container/stop`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  }).then(async resp => console.log(await resp.json()));
-}
-
 export default function Home() {
   const [useSSH, setUseSSH] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(true);
+  const [startingContainer, setStartingContainer] = useState(false);
+  const [showMessage, setShowMessage] = useState<
+    { message: string; severity: AlertColor } | undefined
+  >(undefined);
   const [modeEnv, setModeEnv] = useState<string>('backup');
   const [volumeList, setVolumeList] = useState([]);
   const [containerStatus, setContainerStatus] = useState<string | undefined>(
     undefined,
   );
+
+  const boxBackgroundColor = '#7DA2A9';
+
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string,
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setSnackbarOpen(false);
+  };
+
+  function stopContainer() {
+    fetch(`${API_BASEURL}/container/stop`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(async resp => await resp.json())
+      .then(data => {
+        setShowMessage({
+          message:
+            data.status === 'removing' ? 'Stopping Container' : data.status,
+          severity: data.status === 'removing' ? 'success' : 'error',
+        }),
+          setSnackbarOpen(true);
+      });
+  }
 
   async function fetchApi(event: any) {
     event.preventDefault();
@@ -67,14 +97,23 @@ export default function Home() {
         sshPassword: sshPassword,
       },
     };
-
+    setStartingContainer(true);
     fetch(`${API_BASEURL}/container/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(bodyToSend),
-    }).then(async resp => console.log(await resp.json()));
+    })
+      .then(async resp => await resp.json())
+      .then(data => {
+        setShowMessage({
+          message: data.message,
+          severity: data.message === 'Restorix Started' ? 'success' : 'error',
+        });
+        setSnackbarOpen(true);
+        setStartingContainer(false);
+      });
   }
 
   useEffect(() => {
@@ -131,12 +170,18 @@ export default function Home() {
               marginTop: '2rem',
             }}
           >
-            <Typography variant="h2">RESTORIX</Typography>
+            <Typography
+              variant="h2"
+              color={boxBackgroundColor}
+              sx={{ fontWeight: 600 }}
+            >
+              RESTORIX
+            </Typography>
             <br />
             <br />
             <Box
               sx={{
-                backgroundColor: '#463940',
+                backgroundColor: boxBackgroundColor,
                 // color: 'white',
                 width: '-webkit-fill-available',
                 height: 'fit-content',
@@ -263,7 +308,11 @@ export default function Home() {
                   </RadioGroup>
                 </div>
                 <br />
-                <Button type="submit" variant="contained">
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={containerStatus === 'running' || startingContainer}
+                >
                   START RESTORIX
                 </Button>
                 {containerStatus === 'running' && (
@@ -282,17 +331,27 @@ export default function Home() {
                 )}
                 <br />
                 <div style={{ height: '2rem' }} />
-                <div
-                  style={{
+                <Box
+                  sx={{
+                    backgroundColor: '#F7F7F7',
+                    // color: 'white',
+                    width: '-webkit-fill-available',
+                    height: 'fit-content',
+                    borderRadius: '10px',
+                    padding: '1rem',
+                    marginTop: '2rem',
                     display: 'flex',
                     flexDirection: 'column',
+                    position: 'relative',
+                    justifyContent: 'space-around',
                     alignItems: 'center',
                   }}
                 >
-                  <Typography variant="h6">Service Status:</Typography>
+                  <Typography variant="h6">Status:</Typography>
 
                   <Typography
                     style={{
+                      fontWeight: 600,
                       color:
                         containerStatus === 'running'
                           ? 'green'
@@ -302,20 +361,18 @@ export default function Home() {
                     }}
                     variant="body1"
                   >
-                    {containerStatus === 'running' ? (
-                      <>Running</>
-                    ) : containerStatus === 'inexistent' ? (
-                      <>Not running</>
+                    {containerStatus === 'inexistent' ? (
+                      <>NOT RUNNING</>
                     ) : (
-                      <>{containerStatus}</>
+                      <>{containerStatus?.toUpperCase()}</>
                     )}
                   </Typography>
-                </div>
+                </Box>
               </div>
             </Box>
             <Box
               sx={{
-                backgroundColor: '#463940',
+                backgroundColor: boxBackgroundColor,
                 // color: 'white',
                 width: '-webkit-fill-available',
                 height: 'fit-content',
@@ -353,6 +410,19 @@ export default function Home() {
           </div>
         </div>
       </form>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={showMessage?.severity ? showMessage?.severity : 'info'}
+          sx={{ width: '100%' }}
+        >
+          {showMessage?.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }

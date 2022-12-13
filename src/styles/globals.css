@@ -1,6 +1,6 @@
 html,
 body {
-  color: white;
+  color: #000000;
   padding: 0;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
@@ -19,7 +19,7 @@ a {
 .app {
   width: 100vw;
   height: 100vh;
-  background-color: #0b172a;
+  background-color: #f7f7f7;
 }
 
 .app-container {
@@ -39,4 +39,12 @@ a {
     color: white;
     background: black;
   }
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+  transition-delay: background-color 5000s, color 5000s;
 }
