@@ -24,9 +24,7 @@ export default async function handler(
       console.log('Stopping container... ⏳');
       await container.stop();
       console.log(`└─ Done`);
-      res
-        .status(200)
-        .json({ status: (await container.inspect()).State.Status });
+      res.status(200).json({ message: 'Restorix Stopped', status: 'stopped' });
       return;
     } catch (e: any) {
       if (e.statusCode === 404) {

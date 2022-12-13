@@ -1,14 +1,9 @@
-import {
-  Alert,
-  AlertColor,
-  Snackbar,
-  Typography,
-  IconButton,
-} from '@mui/material';
+import { AlertColor, Typography, IconButton } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { API_BASEURL } from '../config';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
+import { SnackbarComponent } from './SnackbarComponent';
 
 const STATUS_UPDATE_TIME = 5000;
 
@@ -24,17 +19,6 @@ export function Navbar() {
   >(undefined);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-
-  function handleSnackbarClose(
-    event?: React.SyntheticEvent | Event,
-    reason?: string,
-  ) {
-    if (reason === 'clickaway') {
-      return;
-    }
-
-    setSnackbarOpen(false);
-  }
 
   function startContainer() {
     setStartingContainer(true);
@@ -88,9 +72,8 @@ export function Navbar() {
       .then(async resp => await resp.json())
       .then(data => {
         setShowMessage({
-          message:
-            data.status === 'removing' ? 'Stopping Container' : data.status,
-          severity: data.status === 'removing' ? 'success' : 'error',
+          message: data.message,
+          severity: data.status === 'stopped' ? 'info' : 'error',
         }),
           setSnackbarOpen(true);
       });
@@ -101,9 +84,16 @@ export function Navbar() {
       style={{
         width: '100%',
         height: '70px',
-        backgroundColor: 'red',
+        backgroundColor: '#00233d',
         display: 'flex',
         alignItems: 'center',
+        borderBottom: `${
+          containerStatus === 'running'
+            ? '5px solid #00563B'
+            : containerStatus === 'inexistent'
+            ? '5px solid #800000'
+            : 'none'
+        }`,
       }}
     >
       <div style={{ width: '5rem' }} />
@@ -112,66 +102,72 @@ export function Navbar() {
       </Typography>
       <div style={{ flexGrow: 1 }} />
 
-      <Typography variant="h6" color="white">
-        Status:
-      </Typography>
-      <br />
-      <Typography
+      <div
         style={{
-          fontWeight: 600,
-          color:
-            containerStatus === 'running'
-              ? 'green'
-              : containerStatus === 'inexistent'
-              ? //   ? 'red'
-                //   : 'black',
-                'white'
-              : 'black',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
-        variant="body1"
       >
-        {containerStatus === 'inexistent' ? (
-          <>NOT RUNNING</>
-        ) : (
-          <>{containerStatus?.toUpperCase()}</>
-        )}
-      </Typography>
+        <Typography variant="body2" color="white">
+          Status:
+        </Typography>
+        <Typography
+          style={{
+            fontWeight: 600,
+            color:
+              containerStatus === 'running'
+                ? 'green'
+                : containerStatus === 'inexistent'
+                ? 'red'
+                : 'black',
+          }}
+          variant="body1"
+        >
+          {containerStatus === 'inexistent' ? (
+            <>NOT RUNNING</>
+          ) : (
+            <>{containerStatus?.toUpperCase()}</>
+          )}
+        </Typography>
+      </div>
+
       <div style={{ flexGrow: 1 }} />
 
-      <IconButton
-        disabled={containerStatus === 'running' || startingContainer}
-        color="success"
-        onClick={() => {
-          startContainer();
+      <div
+        style={{
+          backgroundColor: 'white',
+          padding: '0.3rem',
+          borderRadius: '100px',
         }}
       >
-        <PlayCircleIcon />
-      </IconButton>
-
-      <IconButton // disabled={containerStatus === 'running' || startingContainer}
-        disabled={containerStatus !== 'running'}
-        onClick={() => {
-          stopContainer();
-        }}
-        color="error"
-      >
-        <StopCircleIcon />
-      </IconButton>
-
-      <div style={{ width: '5rem' }} />
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={showMessage?.severity ? showMessage?.severity : 'info'}
-          sx={{ width: '100%' }}
+        <IconButton
+          disabled={containerStatus === 'running' || startingContainer}
+          color="success"
+          onClick={() => {
+            startContainer();
+          }}
         >
-          {showMessage?.message}
-        </Alert>
-      </Snackbar>
+          <PlayCircleIcon />
+        </IconButton>
+
+        <IconButton
+          disabled={containerStatus !== 'running'}
+          onClick={() => {
+            stopContainer();
+          }}
+          color="error"
+        >
+          <StopCircleIcon />
+        </IconButton>
+      </div>
+      <div style={{ width: '5rem' }} />
+      <SnackbarComponent
+        open={snackbarOpen}
+        onClose={() => setSnackbarOpen(false)}
+        showMessage={showMessage}
+      />
     </div>
   );
 }

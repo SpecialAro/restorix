@@ -11,6 +11,10 @@ import {
 import { useEffect, useState } from 'react';
 import { API_BASEURL } from '../config';
 import SaveIcon from '@mui/icons-material/Save';
+import {
+  ShowMessageProps,
+  SnackbarComponent,
+} from '../components/SnackbarComponent';
 
 function SectionGroup({ children }: any) {
   return (
@@ -31,6 +35,12 @@ export default function Home() {
   const [useSSH, setUseSSH] = useState(false);
   const [modeEnv, setModeEnv] = useState<string>('backup');
   const [volumeList, setVolumeList] = useState([]);
+
+  const [showMessage, setShowMessage] = useState<ShowMessageProps | undefined>(
+    undefined,
+  );
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     function getVolumes() {
@@ -99,8 +109,12 @@ export default function Home() {
       .then(async resp => await resp.json())
       .then(data => {
         if (data.status !== 'ok') {
-          console.log('API ERROR: ', data.message);
+          setShowMessage({ message: data.message, severity: 'error' });
+          setSnackbarOpen(true);
+          return;
         }
+        setShowMessage({ message: data.message, severity: 'success' });
+        setSnackbarOpen(true);
       });
   }
 
@@ -250,6 +264,13 @@ export default function Home() {
           </SectionGroup>
         </div>
       </div>
+      <SnackbarComponent
+        open={snackbarOpen}
+        onClose={() => {
+          setSnackbarOpen(false);
+        }}
+        showMessage={showMessage}
+      />
     </form>
   );
 }
