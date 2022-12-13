@@ -1,10 +1,12 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Docker from 'dockerode';
+import { getSettingsData } from '../settings/read';
 const docker = new Docker();
 
 type Data = {
   message: string;
+  status: 'error' | 'ok';
 };
 
 // fix from: https://github.com/apocas/dockerode/issues/703
@@ -28,8 +30,18 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>,
 ) {
+  const settingsData = getSettingsData();
+
+  if (settingsData.status !== 'ok') {
+    res.status(200).json({
+      message: 'Something went with the settings file',
+      status: 'error',
+    });
+    return;
+  }
+
   const { backupPath, modeEnv, volumesToMount, crontabEnv, sshSettings } =
-    req.body;
+    settingsData.data;
 
   const { useSSH, sshHost, sshUser, sshPassword } = sshSettings;
 
@@ -63,9 +75,10 @@ export default async function handler(
   if (containerList.length !== 0) {
     const containerStatus = containerList[0].State;
     if (containerStatus !== 'exited') {
-      res
-        .status(200)
-        .json({ message: 'Restorix is still running in the background.' });
+      res.status(200).json({
+        message: 'Restorix is still running in the background.',
+        status: 'ok',
+      });
       return;
     }
     const container = docker.getContainer(containerList[0].Id);
@@ -95,5 +108,5 @@ export default async function handler(
     });
   console.log(`└─ Done`);
 
-  res.status(200).json({ message: 'Restorix Started' });
+  res.status(200).json({ message: 'Restorix Started', status: 'ok' });
 }
