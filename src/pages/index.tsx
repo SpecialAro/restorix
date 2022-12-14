@@ -15,6 +15,24 @@ import {
   ShowMessageProps,
   SnackbarComponent,
 } from '../components/SnackbarComponent';
+import { getSettingsData } from './api/settings/read';
+
+interface AppSettings {
+  backupPath: string;
+  modeEnv: string;
+  volumesToMount: string[];
+  crontabEnv: string;
+  sshSettings: {
+    useSSH: boolean;
+    sshHost?: string;
+    sshUser?: string;
+    sshPassword?: string;
+  };
+}
+
+interface IProps {
+  appSettings: AppSettings;
+}
 
 function SectionGroup({ children }: any) {
   return (
@@ -31,9 +49,11 @@ function SectionGroup({ children }: any) {
   );
 }
 
-export default function Home() {
-  const [useSSH, setUseSSH] = useState(false);
-  const [modeEnv, setModeEnv] = useState<string>('backup');
+export default function Home(props: IProps) {
+  const { appSettings } = props;
+
+  const [useSSH, setUseSSH] = useState(appSettings.sshSettings.useSSH);
+  const [modeEnv, setModeEnv] = useState<string>(appSettings.modeEnv);
   const [volumeList, setVolumeList] = useState([]);
 
   const [showMessage, setShowMessage] = useState<ShowMessageProps | undefined>(
@@ -64,7 +84,6 @@ export default function Home() {
     event.preventDefault();
 
     const backupPath = event.target.backup_path.value;
-    const crontabEnv = event.target.crontab_env.value;
 
     const sshHost = useSSH ? event.target.ssh_host.value : undefined;
     const sshUser = useSSH ? event.target.ssh_username.value : undefined;
@@ -73,6 +92,7 @@ export default function Home() {
     var selectedVolumes = [];
 
     if (modeEnv === 'backup') {
+      var crontabEnv = event.target.crontab_env.value;
       const arraySelectedVolumes = Array.from(event.target.selected_volumes);
 
       const newArray = arraySelectedVolumes.map((selectedVolumes: any) => {
@@ -84,10 +104,17 @@ export default function Home() {
         return element !== undefined;
       });
 
-      if (selectedVolumes.length === 0) return;
+      if (selectedVolumes.length === 0) {
+        setShowMessage({
+          message: 'Please select at least one volume.',
+          severity: 'warning',
+        });
+        setSnackbarOpen(true);
+        return;
+      }
     }
 
-    const bodyToSend = {
+    const bodyToSend: AppSettings = {
       backupPath: backupPath,
       modeEnv: modeEnv,
       volumesToMount: selectedVolumes,
@@ -186,16 +213,22 @@ export default function Home() {
               required
               label={`Backup location (absolute path)`}
               variant="standard"
+              defaultValue={appSettings.backupPath}
             />
             <br />
-            <TextField
-              type="text"
-              id="crontab_env"
-              name="crontab_env"
-              label="Crontab"
-              variant="standard"
-            />
-            <br />
+            {modeEnv !== 'restore' && (
+              <>
+                <TextField
+                  type="text"
+                  id="crontab_env"
+                  name="crontab_env"
+                  label="Crontab"
+                  variant="standard"
+                  defaultValue={appSettings.crontabEnv}
+                />
+                <br />
+              </>
+            )}
           </SectionGroup>
 
           <SectionGroup>
@@ -206,6 +239,7 @@ export default function Home() {
                   name="use_ssh"
                   value="use_ssh"
                   onChange={() => setUseSSH(!useSSH)}
+                  defaultChecked={useSSH}
                 />
               }
               label="Use SSH"
@@ -220,6 +254,7 @@ export default function Home() {
                   name="ssh_settings"
                   label="Host"
                   variant="standard"
+                  defaultValue={appSettings.sshSettings.sshHost}
                 />
                 <br />
                 <TextField
@@ -228,6 +263,7 @@ export default function Home() {
                   name="ssh_settings"
                   label="Username"
                   variant="standard"
+                  defaultValue={appSettings.sshSettings.sshUser}
                 />
                 <br />
                 <TextField
@@ -236,32 +272,42 @@ export default function Home() {
                   name="ssh_settings"
                   label="Password"
                   variant="standard"
+                  defaultValue={appSettings.sshSettings.sshPassword}
                 />
               </>
             ) : null}
           </SectionGroup>
-          <SectionGroup>
-            <Typography variant="h6">Volume List:</Typography>
-            {volumeList.map((volume: any) => {
-              return (
-                <div key={volume.Name}>
-                  <br />
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        id={volume.Name}
-                        name="selected_volumes"
-                        value={volume.Name}
-                        size="small"
-                      />
-                    }
-                    label={volume.Name}
-                  />
-                  <br />
-                </div>
-              );
-            })}
-          </SectionGroup>
+          {modeEnv !== 'restore' && (
+            <SectionGroup>
+              <Typography variant="h6">Volume List:</Typography>
+              {volumeList.map((volume: any) => {
+                var isDefaultActive = false;
+                appSettings.volumesToMount.map(element => {
+                  if (volume.Name === element) {
+                    isDefaultActive = true;
+                  }
+                });
+                return (
+                  <div key={volume.Name}>
+                    <br />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          id={volume.Name}
+                          name="selected_volumes"
+                          value={volume.Name}
+                          size="small"
+                          defaultChecked={isDefaultActive}
+                        />
+                      }
+                      label={volume.Name}
+                    />
+                    <br />
+                  </div>
+                );
+              })}
+            </SectionGroup>
+          )}
         </div>
       </div>
       <SnackbarComponent
@@ -273,4 +319,9 @@ export default function Home() {
       />
     </form>
   );
+}
+
+export async function getServerSideProps({ req }: any) {
+  const appSettings = getSettingsData().data;
+  return { props: { appSettings } };
 }

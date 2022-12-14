@@ -34,7 +34,7 @@ export default async function handler(
 
   if (settingsData.status !== 'ok') {
     res.status(200).json({
-      message: 'Something went with the settings file',
+      message: 'Something went wrong with the settings file',
       status: 'error',
     });
     return;
