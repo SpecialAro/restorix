@@ -108,6 +108,9 @@ export function Navbar() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
         }}
       >
         <Typography variant="body2" color="white">

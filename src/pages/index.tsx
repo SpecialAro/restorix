@@ -15,20 +15,7 @@ import {
   ShowMessageProps,
   SnackbarComponent,
 } from '../components/SnackbarComponent';
-import { getSettingsData } from './api/settings/read';
-
-interface AppSettings {
-  backupPath: string;
-  modeEnv: string;
-  volumesToMount: string[];
-  crontabEnv: string;
-  sshSettings: {
-    useSSH: boolean;
-    sshHost?: string;
-    sshUser?: string;
-    sshPassword?: string;
-  };
-}
+import { AppSettings, getSettingsData } from './api/settings/read';
 
 interface IProps {
   appSettings: AppSettings;

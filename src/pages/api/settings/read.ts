@@ -3,13 +3,32 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import { settingsFilePath } from './save';
 
+export interface AppSettings {
+  backupPath: string;
+  modeEnv: string;
+  volumesToMount: string[];
+  crontabEnv: string;
+  sshSettings: {
+    useSSH: boolean;
+    sshHost?: string;
+    sshUser?: string;
+    sshPassword?: string;
+  };
+}
+
 type Data = {
   message?: string;
-  data?: any;
+  data?: AppSettings;
 };
 
-export function getSettingsData(): { data: any; status: string } {
-  var data;
+export function getSettingsData(): { data: AppSettings; status: string } {
+  var data = {
+    backupPath: '',
+    modeEnv: 'backup',
+    crontabEnv: '',
+    sshSettings: { useSSH: false },
+    volumesToMount: [],
+  };
   var status: 'ok' | 'error' = 'error';
   try {
     data = JSON.parse(
