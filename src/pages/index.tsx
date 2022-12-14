@@ -16,6 +16,11 @@ import {
   SnackbarComponent,
 } from '../components/SnackbarComponent';
 import { AppSettings, getSettingsData } from './api/settings/read';
+import 'react-js-cron/dist/styles.css';
+import dynamic from 'next/dynamic';
+const Cron = dynamic(() => import('react-js-cron'), {
+  ssr: false,
+});
 
 interface IProps {
   appSettings: AppSettings;
@@ -47,7 +52,13 @@ export default function Home(props: IProps) {
     undefined,
   );
 
+  const defaultCronValue = '* * * * *';
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [useCrontab, setUseCrontab] = useState(appSettings.crontabEnv !== '');
+  const [crontabValue, setCrontabValue] = useState(
+    useCrontab ? appSettings.crontabEnv : defaultCronValue,
+  );
 
   useEffect(() => {
     function getVolumes() {
@@ -79,7 +90,6 @@ export default function Home(props: IProps) {
     var selectedVolumes = [];
 
     if (modeEnv === 'backup') {
-      var crontabEnv = event.target.crontab_env.value;
       const arraySelectedVolumes = Array.from(event.target.selected_volumes);
 
       const newArray = arraySelectedVolumes.map((selectedVolumes: any) => {
@@ -105,7 +115,7 @@ export default function Home(props: IProps) {
       backupPath: backupPath,
       modeEnv: modeEnv,
       volumesToMount: selectedVolumes,
-      crontabEnv: crontabEnv,
+      crontabEnv: modeEnv === 'backup' ? crontabValue : '',
       sshSettings: {
         useSSH: useSSH,
         sshHost: sshHost,
@@ -205,15 +215,31 @@ export default function Home(props: IProps) {
             <br />
             {modeEnv !== 'restore' && (
               <>
-                <TextField
-                  type="text"
-                  id="crontab_env"
-                  name="crontab_env"
-                  label="Crontab"
-                  variant="standard"
-                  defaultValue={appSettings.crontabEnv}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      id="use_crontab"
+                      name="use_crontab"
+                      value="use_crontab"
+                      onChange={() => {
+                        setUseCrontab(prev => {
+                          if (prev) {
+                            setCrontabValue('');
+                          } else {
+                            setCrontabValue(defaultCronValue);
+                          }
+                          return !prev;
+                        });
+                      }}
+                      defaultChecked={useCrontab}
+                    />
+                  }
+                  label="Scheduler (crontab)"
                 />
                 <br />
+                <div style={{ display: useCrontab ? undefined : 'none' }}>
+                  <Cron setValue={setCrontabValue} value={crontabValue} />
+                </div>
               </>
             )}
           </SectionGroup>

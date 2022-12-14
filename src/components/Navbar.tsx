@@ -13,6 +13,7 @@ export function Navbar() {
   );
 
   const [startingContainer, setStartingContainer] = useState<boolean>(false);
+  const [stopingContainer, setStopingContainer] = useState<boolean>(false);
 
   const [showMessage, setShowMessage] = useState<
     { message: string; severity: AlertColor } | undefined
@@ -63,6 +64,7 @@ export function Navbar() {
   });
 
   function stopContainer() {
+    setStopingContainer(true);
     fetch(`${API_BASEURL}/container/stop`, {
       method: 'POST',
       headers: {
@@ -76,6 +78,7 @@ export function Navbar() {
           severity: data.status === 'stopped' ? 'info' : 'error',
         }),
           setSnackbarOpen(true);
+        setStopingContainer(false);
       });
   }
 
@@ -133,6 +136,8 @@ export function Navbar() {
           ) : (
             <>{containerStatus?.toUpperCase()}</>
           )}
+          {/* {startingContainer && <>Starting...</>}
+          {stopingContainer && <>Stopping...</>} */}
         </Typography>
       </div>
 
@@ -156,7 +161,7 @@ export function Navbar() {
         </IconButton>
 
         <IconButton
-          disabled={containerStatus !== 'running'}
+          disabled={containerStatus !== 'running' || stopingContainer}
           onClick={() => {
             stopContainer();
           }}
