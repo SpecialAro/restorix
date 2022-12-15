@@ -231,7 +231,7 @@ export default function Home(props: IProps) {
                           return !prev;
                         });
                       }}
-                      defaultChecked={useCrontab}
+                      checked={useCrontab}
                     />
                   }
                   label="Scheduler (crontab)"
@@ -252,7 +252,7 @@ export default function Home(props: IProps) {
                   name="use_ssh"
                   value="use_ssh"
                   onChange={() => setUseSSH(!useSSH)}
-                  defaultChecked={useSSH}
+                  checked={useSSH}
                 />
               }
               label="Use SSH"

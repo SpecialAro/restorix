@@ -13,7 +13,7 @@ export function Navbar() {
   );
 
   const [startingContainer, setStartingContainer] = useState<boolean>(false);
-  const [stopingContainer, setStopingContainer] = useState<boolean>(false);
+  const [stoppingContainer, setStoppingContainer] = useState<boolean>(false);
 
   const [showMessage, setShowMessage] = useState<
     { message: string; severity: AlertColor } | undefined
@@ -37,12 +37,11 @@ export function Navbar() {
           severity: data.message === 'Restorix Started' ? 'success' : 'error',
         });
         setSnackbarOpen(true);
-        setInterval(() => setStartingContainer(false), STATUS_UPDATE_TIME);
       });
   }
 
   useEffect(() => {
-    function getVolumes() {
+    function getStatus() {
       fetch(`${API_BASEURL}/container/status`, {
         method: 'GET',
         headers: {
@@ -54,17 +53,25 @@ export function Navbar() {
         })
         .then(data => {
           setContainerStatus(data!.status);
+          if (data.status === 'running') {
+            setStartingContainer(false);
+          } else if (data.status === 'inexistent') {
+            setStoppingContainer(false);
+          } else {
+            setStartingContainer(false);
+            setStoppingContainer(false);
+          }
         });
     }
 
-    getVolumes();
-    const interval = setInterval(() => getVolumes(), STATUS_UPDATE_TIME);
+    getStatus();
+    const interval = setInterval(() => getStatus(), STATUS_UPDATE_TIME);
 
     return () => clearInterval(interval);
   });
 
   function stopContainer() {
-    setStopingContainer(true);
+    setStoppingContainer(true);
     fetch(`${API_BASEURL}/container/stop`, {
       method: 'POST',
       headers: {
@@ -78,9 +85,19 @@ export function Navbar() {
           severity: data.status === 'stopped' ? 'info' : 'error',
         }),
           setSnackbarOpen(true);
-        setStopingContainer(false);
       });
   }
+
+  const containerFinalStatus =
+    containerStatus === 'inexistent' && !startingContainer
+      ? 'not running'
+      : containerStatus === 'inexistent' && startingContainer
+      ? 'starting'
+      : containerStatus === 'running' && stoppingContainer
+      ? 'stopping'
+      : containerStatus === 'running' && !stoppingContainer
+      ? 'running'
+      : containerStatus;
 
   return (
     <div
@@ -91,11 +108,11 @@ export function Navbar() {
         display: 'flex',
         alignItems: 'center',
         borderBottom: `${
-          containerStatus === 'running'
+          containerFinalStatus === 'running'
             ? '5px solid #00563B'
-            : containerStatus === 'inexistent'
+            : containerFinalStatus === 'not running'
             ? '5px solid #800000'
-            : 'none'
+            : '5px solid yellow'
         }`,
       }}
     >
@@ -123,21 +140,15 @@ export function Navbar() {
           style={{
             fontWeight: 600,
             color:
-              containerStatus === 'running'
+              containerFinalStatus === 'running'
                 ? 'green'
-                : containerStatus === 'inexistent'
+                : containerFinalStatus === 'not running'
                 ? 'red'
-                : 'black',
+                : 'yellow',
           }}
           variant="body1"
         >
-          {containerStatus === 'inexistent' ? (
-            <>NOT RUNNING</>
-          ) : (
-            <>{containerStatus?.toUpperCase()}</>
-          )}
-          {/* {startingContainer && <>Starting...</>}
-          {stopingContainer && <>Stopping...</>} */}
+          {containerFinalStatus?.toUpperCase()}
         </Typography>
       </div>
 
@@ -161,7 +172,7 @@ export function Navbar() {
         </IconButton>
 
         <IconButton
-          disabled={containerStatus !== 'running' || stopingContainer}
+          disabled={containerStatus !== 'running' || stoppingContainer}
           onClick={() => {
             stopContainer();
           }}
