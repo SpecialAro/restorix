@@ -10,7 +10,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - restorix_data:/app/data
+      - data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
 volumes:
-  restorix_data:
+  data:
