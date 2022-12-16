@@ -61,7 +61,7 @@ export default async function handler(
   }
 
   volumesToMount.map((element: string) => {
-    bindVolumes.push(`${element}:/tobackup/${element}`);
+    bindVolumes.push(`${element}:/tobackup/${element}:ro`);
   });
 
   var auxContainer: Docker.Container;
