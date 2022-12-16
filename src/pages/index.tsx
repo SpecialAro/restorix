@@ -41,6 +41,23 @@ function SectionGroup({ children }: any) {
   );
 }
 
+function UseSSHButton({ useSSH, setUseSSH }: any) {
+  return (
+    <FormControlLabel
+      control={
+        <Checkbox
+          id="use_ssh"
+          name="use_ssh"
+          value="use_ssh"
+          onChange={() => setUseSSH(!useSSH)}
+          checked={useSSH}
+        />
+      }
+      label="Use SSH"
+    />
+  );
+}
+
 export default function Home(props: IProps) {
   const { appSettings } = props;
 
@@ -199,7 +216,7 @@ export default function Home(props: IProps) {
             alignItems: 'flex-start',
             marginTop: '2rem',
             justifyContent: 'space-between',
-            maxWidth: '50rem',
+            maxWidth: '80%',
           }}
         >
           <SectionGroup>
@@ -213,6 +230,7 @@ export default function Home(props: IProps) {
               defaultValue={appSettings.backupPath}
             />
             <br />
+            <UseSSHButton useSSH={useSSH} setUseSSH={setUseSSH} />
             {modeEnv !== 'restore' && (
               <>
                 <FormControlLabel
@@ -244,23 +262,9 @@ export default function Home(props: IProps) {
             )}
           </SectionGroup>
 
-          <SectionGroup>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  id="use_ssh"
-                  name="use_ssh"
-                  value="use_ssh"
-                  onChange={() => setUseSSH(!useSSH)}
-                  checked={useSSH}
-                />
-              }
-              label="Use SSH"
-            />
-
-            {useSSH ? (
-              <>
-                <br />
+          {useSSH ? (
+            <>
+              <SectionGroup>
                 <TextField
                   type="text"
                   id="ssh_host"
@@ -287,9 +291,9 @@ export default function Home(props: IProps) {
                   variant="standard"
                   defaultValue={appSettings.sshSettings.sshPassword}
                 />
-              </>
-            ) : null}
-          </SectionGroup>
+              </SectionGroup>
+            </>
+          ) : null}
           {modeEnv !== 'restore' && (
             <SectionGroup>
               <Typography variant="h6">Volume List:</Typography>
@@ -313,7 +317,16 @@ export default function Home(props: IProps) {
                           defaultChecked={isDefaultActive}
                         />
                       }
-                      label={volume.Name}
+                      label={
+                        <div
+                          style={{
+                            maxWidth: '20rem',
+                            overflowWrap: 'break-word',
+                          }}
+                        >
+                          {volume.Name}
+                        </div>
+                      }
                     />
                     <br />
                   </div>

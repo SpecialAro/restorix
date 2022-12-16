@@ -2,7 +2,7 @@ version: "3"
 
 services:
   app:
-    image: specialaro/restorix:latest # Official image in: bestporto/bestporto-pa:latest
+    image: specialaro/restorix:latest
     container_name: restorix
     restart: always
     environment:
