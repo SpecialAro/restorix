@@ -2,7 +2,7 @@
 <br />
 <br />
 # RESTORIX
-RESTORIX, created and idealized by André Oliveira ([SpecialAro](https://github.com/specialaro)), is a WebUI for [restorix-core](https://github.com/specialaro/restorix-core) that allows users to backup, restore and migrate docker volumes easily through an Web Interface. Backups are stored in `tar` files locally (in the path specified by the user) or remotely using an SSH connection.
+RESTORIX, created and idealized by André Oliveira ([SpecialAro](https://github.com/specialaro)), is a WebUI for [restorix-core](https://gitlab.com/restorix/restorix-core) that allows users to backup, restore and migrate docker volumes easily through an Web Interface. Backups are stored in `tar` files locally (in the path specified by the user) or remotely using an SSH connection.
 <br />
 <details>
     <summary>Screenshots</summary>
@@ -51,7 +51,7 @@ volumes:
 <br />
 
 ## Contributing
-Contributions are very much welcomed even though the license is still not yet defined. If you think of a cool feature, see a problem that needs solution, or have a suggestion to make, please use the [issue board](https://github.com/specialaro/restorix/issues).
+Contributions are very much welcomed even though the license is still not yet defined. If you think of a cool feature, see a problem that needs solution, or have a suggestion to make, please use the [issue board](https://gitlab.com/restorix/restorix/issues).
 <br />
 <br />
 
