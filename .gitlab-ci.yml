@@ -1,0 +1,62 @@
+stages:
+  - deploy
+cache:
+  paths:
+    - node_modules/
+deploy:
+  image: docker:latest
+  stage: deploy
+  script:
+    - apk update && apk add nodejs-current
+    - export APP_VERSION=v$(node --eval="process.stdout.write(require('./package.json').version)")
+    - docker build -t $DOCKER_USER/restorix:$APP_VERSION -t $DOCKER_USER/restorix:latest .
+    - echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USER --password-stdin
+    - docker push $DOCKER_USER/restorix --all-tags
+    - docker logout
+    - docker system prune --force --all
+  tags:
+    - docker
+  only:
+    - main
+
+develop:
+  image: node:19-alpine
+  stage: deploy
+  rules:
+    - if: ($CI_COMMIT_TITLE !~ /\[skip ci\]/ && ($CI_COMMIT_BRANCH == "develop" || $CI_PIPELINE_SOURCE == 'merge_request_event')) && ($CI_PIPELINE_SOURCE != "schedule")
+      when: always
+  script:
+    - npm i -g pnpm@$(node --eval="process.stdout.write(require('./package.json').engines.pnpm)")
+    - apk add --update --no-cache openssl1.1-compat # Fix applied in: https://github.com/prisma/prisma/issues/14073#issuecomment-1348534199
+    - pnpm i
+    - pnpm build
+  tags:
+    - docker
+
+nightly:
+  image: node:19-alpine
+  stage: deploy
+  retry: 2
+  rules:
+    - if: ($CI_COMMIT_TITLE !~ /(Bump version to).*(\[skip ci\])/i && $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "schedule")
+      when: always
+  script:
+    - apk update && apk add docker git
+    - git config user.name "RESTORIX CI"
+    - git config user.email "restorix@specialaro.com"
+    - git remote set-url origin https://$GITLAB_USERNAME:$GITLAB_ACCESS_TOKEN@$GITLAB_SERVER/$CI_PROJECT_PATH
+    - git clean -xdf
+    - git checkout develop
+    - git fetch --prune --prune-tags origin
+    - git reset --hard origin/develop
+    - npm version prerelease -m "Bump version to '%s' [skip ci]"
+    - export APP_VERSION=v$(node --eval="process.stdout.write(require('./package.json').version)")
+    - docker build -t $DOCKER_USER/restorix:$APP_VERSION -t $DOCKER_USER/restorix:nightly .
+    - echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USER --password-stdin
+    - docker push $DOCKER_USER/restorix --all-tags
+    - docker logout
+    - docker system prune --force --all
+    - git push origin develop --no-verify --follow-tags
+    - git clean -xdf
+  tags:
+    - docker
