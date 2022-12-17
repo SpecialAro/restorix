@@ -1,6 +1,6 @@
 {
   "name": "restorix",
-  "version": "0.0.1-alpha.3",
+  "version": "0.0.1-alpha.4",
   "private": true,
   "engines": {
     "node": "19.2.0",
