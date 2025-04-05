@@ -27,7 +27,7 @@
     "@types/react-dom": "18.0.9",
     "antd": "^5.0.7",
     "docker-compose": "^0.23.17",
-    "dockerode": "^3.3.4",
+    "dockerode": "^4.0.5",
     "eslint": "8.29.0",
     "eslint-config-next": "13.0.6",
     "eslint-config-prettier": "^8.5.0",
